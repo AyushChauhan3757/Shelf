@@ -1,0 +1,356 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Shelf</title>
+<link href="https://fonts.googleapis.com/css2?family=Literata:wght@400;600&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<style>
+:root{--bg:#14181F;--card:#1E2530;--line:#2A313C;--ink:#E6E9EF;--mute:#9AA3B2;--acc:#E8A33D;--onacc:#14181F}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--ink);font-family:'DM Sans',system-ui,sans-serif;overflow-x:hidden}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.hide{display:none!important}
+#lib{padding:calc(28px + env(safe-area-inset-top)) clamp(18px,5vw,56px) 40px}
+.hd{display:flex;align-items:center;justify-content:space-between}
+.logo{font:600 26px Literata,Georgia,serif;color:var(--acc)}
+.gear{background:var(--card);border:0;border-radius:20px;padding:0 16px;min-height:44px;font-size:14px}
+#sync{color:var(--mute);font-size:12px;margin-top:4px}
+.tabs{display:flex;gap:8px;margin:24px 0 18px}
+.tab{background:var(--card);border:0;border-radius:20px;padding:0 18px;min-height:44px;font-size:14px;color:var(--mute)}
+.tab.on{background:var(--acc);color:var(--onacc);font-weight:700}
+.resume{display:flex;gap:18px;align-items:center;background:var(--card);border-radius:14px;padding:16px;flex-wrap:wrap;margin-bottom:26px}
+.resume img{width:56px;height:84px;object-fit:cover;border-radius:3px 6px 6px 3px;background:var(--line)}
+.resume .t{flex:1;min-width:150px}
+.resume .n{font:600 19px Literata,Georgia,serif}
+.resume .m{color:var(--mute);font-size:14px;margin-top:4px}
+.go{background:var(--acc);color:var(--onacc);border:0;border-radius:24px;padding:0 24px;font-weight:700;min-height:44px}
+.sec{background:var(--card);border:0;border-radius:24px;padding:0 24px;min-height:44px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:26px 22px}
+.book{background:none;border:0;padding:0;text-align:left}
+.cov{aspect-ratio:2/3;background:var(--card);border-radius:4px 8px 8px 4px;box-shadow:0 8px 20px rgba(0,0,0,.4);overflow:hidden;border-left:5px solid rgba(0,0,0,.25)}
+.cov img{width:100%;height:100%;object-fit:cover;display:block}
+.bar{height:4px;background:var(--line);border-radius:2px;margin-top:10px}
+.bar i{display:block;height:4px;background:var(--acc);border-radius:2px}
+.bt{font-size:14px;margin-top:6px;font-weight:500;line-height:1.3}
+.bs{font-size:12px;color:var(--mute);margin-top:2px}
+#msg{color:var(--mute);line-height:1.6;max-width:520px}
+dialog{background:var(--card);color:var(--ink);border:0;border-radius:16px;padding:22px;width:min(360px,calc(100vw - 32px));font-family:inherit}
+dialog::backdrop{background:rgba(0,0,0,.6)}
+#pc{width:140px;aspect-ratio:2/3;object-fit:cover;border-radius:4px 8px 8px 4px;box-shadow:0 8px 20px rgba(0,0,0,.4);display:block;margin:0 auto 16px;background:var(--line)}
+.pn{font:600 21px Literata,Georgia,serif;text-align:center}
+.pm{color:var(--mute);font-size:13px;text-align:center;margin:8px 0 18px;line-height:1.5}
+.pb{display:flex;flex-direction:column;gap:10px}
+.pb button{width:100%}
+.lnk{background:none;border:0;color:var(--mute);min-height:44px;font-size:14px}
+dialog input{width:100%;min-height:44px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);padding:0 12px;font:inherit;margin:10px 0}
+dialog p{color:var(--mute);font-size:13px;line-height:1.5;margin:6px 0}
+#rd{position:fixed;inset:0;display:flex;flex-direction:column;background:var(--rbg);color:var(--rink);--rbg:#F6F1E7;--rink:#2B2820;--rmute:#7B7466;--racc:#B5651D;--rline:#DDD3BF}
+#rd.dark{--rbg:#14181F;--rink:#D9DCE2;--rmute:#8A93A3;--racc:#E8A33D;--rline:#2A313C}
+.top,.bot{display:flex;align-items:center;gap:12px;padding:10px clamp(14px,4vw,40px);color:var(--rmute);font-size:14px}
+.top{padding-top:calc(10px + env(safe-area-inset-top))}
+.bot{padding-bottom:calc(12px + env(safe-area-inset-bottom))}
+.top span.ti{flex:1;text-align:center;font-family:Literata,Georgia,serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ib{background:none;border:0;color:var(--rink);min-height:44px;min-width:44px;font-size:15px}
+#wrap{flex:1;min-height:0;width:100%;position:relative}
+#view{position:absolute;inset:8px 12px;overflow:hidden;display:flex}
+#view.z{overflow:auto;display:block}
+#cv{display:block;margin:auto;background:#fff;box-shadow:0 2px 12px rgba(0,0,0,.2)}
+#rd.dark #cv{filter:invert(.92) hue-rotate(180deg)}
+#load{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--rmute);text-align:center;padding:24px}
+.nav{background:var(--rbg);color:var(--rink);border:1px solid var(--rline);border-radius:24px;min-height:48px;padding:0 24px;font-weight:700}
+.nav:disabled{opacity:.35}
+.prog{flex:1;text-align:center}
+.prog .b{height:4px;background:var(--rline);border-radius:2px;margin-bottom:6px}
+.prog .b i{display:block;height:4px;background:var(--racc);border-radius:2px;width:0}
+#set{position:absolute;right:clamp(14px,4vw,40px);top:calc(56px + env(safe-area-inset-top));background:var(--rbg);color:var(--rink);border:1px solid var(--rline);border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.2);padding:14px;display:flex;flex-direction:column;gap:12px;z-index:5;font-size:14px}
+#set .r{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.sw{width:44px;height:44px;border-radius:50%;border:2px solid var(--rline);padding:0}
+.sw.on{border-color:var(--racc)}
+</style>
+</head>
+<body>
+<main id="lib">
+  <div class="hd"><div><div class="logo">Shelf</div><div id="sync"></div></div><button class="gear" id="gear">Settings</button></div>
+  <div class="tabs"><button class="tab on" id="t1">Reading</button><button class="tab" id="t2">Completed</button></div>
+  <div id="cont" class="hide"><div class="resume" id="resume"></div></div>
+  <div class="grid" id="grid"></div>
+  <p id="msg" class="hide"></p>
+</main>
+
+<dialog id="pop">
+  <img id="pc" alt="">
+  <div class="pn" id="pn"></div><div class="pm" id="pm"></div>
+  <div class="pb" id="pbt"></div>
+  <button class="lnk" id="px" style="width:100%">Close</button>
+</dialog>
+
+<dialog id="sd">
+  <div class="pn" style="text-align:left">Sync settings</div>
+  <p>To save your reading history in the repository (so it works on every device), paste a GitHub access token. It needs read and write access to <b>Contents</b> for this one repository. See the README for the steps.</p>
+  <input id="tok" type="password" placeholder="GitHub token" autocomplete="off">
+  <p id="sst"></p>
+  <div class="pb"><button class="go" id="ssave">Save and sync</button><button class="lnk" id="sx">Close</button></div>
+</dialog>
+
+<section id="rd" class="hide" aria-label="Reader">
+  <div class="top">
+    <button class="ib" id="back">← Library</button>
+    <span class="ti" id="title"></span>
+    <button class="ib" id="aa" aria-label="Display settings" style="font-family:Literata,Georgia,serif;font-size:18px">Aa</button>
+  </div>
+  <div id="set" class="hide">
+    <div class="r"><span>Zoom <span id="zl"></span></span><span><button class="ib" id="sm" aria-label="Zoom out">−</button><button class="ib" id="lg" aria-label="Zoom in">+</button></span></div>
+    <div class="r"><span>Two pages on wide screens</span><button class="ib" id="tw" style="min-width:56px"></button></div>
+    <div class="r"><span>Theme</span><span style="display:flex;gap:10px"><button class="sw" id="tp" aria-label="Paper theme" style="background:#F6F1E7"></button><button class="sw" id="td" aria-label="Dark theme" style="background:#14181F"></button></span></div>
+    <button class="ib" id="fin" style="text-align:left;padding:0">Mark as finished</button>
+  </div>
+  <div id="wrap">
+    <div id="view"><canvas id="cv"></canvas></div>
+    <div id="load"><div id="lt">Preparing book…</div></div>
+  </div>
+  <div class="bot">
+    <button class="nav" id="prev">Previous</button>
+    <div class="prog"><div class="b"><i id="pb"></i></div><span id="pt"></span></div>
+    <button class="nav" id="next">Next</button>
+  </div>
+</section>
+
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+const $=s=>document.querySelector(s);
+const LS={get(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+const prefs=Object.assign({zoom:0,theme:'paper'},LS.get('prefs')||{});
+let books=[],cur=null,pages=1,pg=0,tab='reading',doc=null,rtask=null,rtok=0,rtasks=[];const ZS=[1,1.25,1.5,2,3];
+let prog=LS.get('prog')||{},rsha=null;
+
+const nice=n=>n.replace(/\.pdf$/i,'').replace(/[_-]+/g,' ').trim();
+const url=n=>'book/'+encodeURIComponent(n);
+const fmt=d=>d?new Date(d).toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'}):'';
+const today=()=>new Date().toISOString().slice(0,10);
+const b64e=s=>{let x='';new TextEncoder().encode(s).forEach(c=>x+=String.fromCharCode(c));return btoa(x)};
+const b64d=s=>new TextDecoder().decode(Uint8Array.from(atob(s.replace(/\n/g,'')),c=>c.charCodeAt(0)));
+
+/* ---------- progress storage + repo sync ---------- */
+function saveLocal(){LS.set('prog',prog);LS.set('dirty',1)}
+function api(){const m=location.hostname.match(/^(.+)\.github\.io$/);if(!m)return null;const repo=location.pathname.split('/')[1]||location.hostname;return 'https://api.github.com/repos/'+m[1]+'/'+repo+'/contents/progress.json'}
+function setSync(){const t=LS.get('tok');$('#sync').textContent=!api()?'Saving in this browser only':!t?'Saving in this browser · add a token in Settings to sync':LS.get('dirty')?'Changes not yet synced':'Synced to your repository'}
+function merge(rem){
+  for(const k in rem){const a=prog[k],b=rem[k];
+    if(!a){prog[k]=b;continue}
+    const w=(b.updated||0)>(a.updated||0)?Object.assign({},b):a;
+    w.added=[a.added,b.added].filter(Boolean).sort()[0]||w.added;prog[k]=w}
+  LS.set('prog',prog);
+}
+async function pull(){
+  const u=api();if(!u)return;const tk=LS.get('tok');
+  try{
+    const r=await fetch(u+'?t='+Date.now(),{headers:tk?{Authorization:'Bearer '+tk}:{},cache:'no-store'});
+    if(r.status===404){rsha=null;return}
+    if(!r.ok)return;
+    const j=await r.json();rsha=j.sha;
+    merge((JSON.parse(b64d(j.content))||{}).books||{});
+  }catch(e){}
+}
+async function push(ka,retry){
+  const u=api(),tk=LS.get('tok');
+  if(!u||!tk||!LS.get('dirty'))return;
+  const body={message:'Update reading progress',content:b64e(JSON.stringify({books:prog},null,1))};
+  if(rsha)body.sha=rsha;
+  try{
+    const r=await fetch(u,{method:'PUT',headers:{Authorization:'Bearer '+tk,'Content-Type':'application/json'},body:JSON.stringify(body),keepalive:!!ka});
+    if(r.ok){rsha=(await r.json()).content.sha;LS.set('dirty',0)}
+    else if((r.status===409||r.status===422)&&!retry&&!ka){await pull();await push(false,true)}
+  }catch(e){}
+  setSync();
+}
+
+/* ---------- library ---------- */
+async function listBooks(){
+  const m=location.hostname.match(/^(.+)\.github\.io$/);
+  if(m){
+    const repo=location.pathname.split('/')[1]||location.hostname;
+    try{
+      const r=await fetch('https://api.github.com/repos/'+m[1]+'/'+repo+'/contents/book');
+      if(r.ok){const l=(await r.json()).filter(f=>/\.pdf$/i.test(f.name)).map(f=>f.name);LS.set('list',l);return l}
+    }catch(e){}
+  }
+  try{const r=await fetch('book/books.json');if(r.ok){const j=await r.json();if(j.length)return j}}catch(e){}
+  return LS.get('list')||[];
+}
+async function cover(n){
+  const k='cov:'+n,c=LS.get(k);if(c)return c;
+  try{
+    const pdf=await pdfjsLib.getDocument(url(n)).promise;
+    const p=await pdf.getPage(1),v0=p.getViewport({scale:1}),v=p.getViewport({scale:300/v0.width});
+    const cv=document.createElement('canvas');cv.width=v.width;cv.height=v.height;
+    await p.render({canvasContext:cv.getContext('2d'),viewport:v}).promise;
+    const d=cv.toDataURL('image/jpeg',.7);LS.set(k,d);pdf.destroy();return d;
+  }catch(e){return ''}
+}
+async function lib(){
+  setSync();
+  books=await listBooks();
+  if(!books.length){$('#grid').innerHTML='';const m=$('#msg');m.classList.remove('hide');m.textContent='No books found. Add PDF files to the book folder in your repository and reload this page.';return}
+  $('#msg').classList.add('hide');
+  let added=false;
+  books.forEach(n=>{if(!prog[n]){prog[n]={title:nice(n),added:today(),status:'new',para:0,pct:0,pg:1,updated:0};added=true}});
+  if(added)saveLocal();
+  render();
+  await pull();
+  books.forEach(n=>{if(!prog[n]){prog[n]={title:nice(n),added:today(),status:'new',para:0,pct:0,pg:1,updated:0}}});
+  render();
+  if(LS.get('dirty'))push(false);
+}
+function render(){
+  const g=$('#grid');g.innerHTML='';
+  const done=tab==='done';
+  const list=books.filter(n=>(prog[n]&&prog[n].status==='finished')===done)
+    .sort((a,b)=>(done?(prog[b].finished||'').localeCompare(prog[a].finished||''):(prog[b].updated||0)-(prog[a].updated||0)));
+  $('#t1').textContent='Reading ('+books.filter(n=>prog[n]&&prog[n].status!=='finished').length+')';
+  $('#t2').textContent='Completed ('+books.filter(n=>prog[n]&&prog[n].status==='finished').length+')';
+  $('#t1').classList.toggle('on',!done);$('#t2').classList.toggle('on',done);
+  const last=!done&&list.find(n=>prog[n].status==='reading');
+  $('#cont').classList.toggle('hide',!last);
+  if(last){
+    const r=$('#resume');r.innerHTML='<img alt=""><div class="t"><div class="n"></div><div class="m"></div></div><button class="go">Resume</button>';
+    r.querySelector('.n').textContent=nice(last);
+    r.querySelector('.m').textContent=Math.round(prog[last].pct*100)+'% read · page '+prog[last].pg;
+    r.querySelector('.go').onclick=()=>open(last);
+    cover(last).then(d=>{if(d)r.querySelector('img').src=d});
+  }
+  if(!list.length){const e=document.createElement('p');e.style.color='var(--mute)';e.textContent=done?'No completed books yet.':'Nothing here. Everything is completed.';g.appendChild(e)}
+  list.forEach(n=>{
+    const p=prog[n],pc=Math.round((p.pct||0)*100);
+    const b=document.createElement('button');b.className='book';b.dataset.n=n;
+    b.innerHTML='<div class="cov"></div>'+(p.status==='reading'&&pc>0?'<div class="bar"><i style="width:'+pc+'%"></i></div>':'')+'<div class="bt"></div><div class="bs">'+(p.status==='finished'?'Finished':p.status==='reading'?pc+'% read':'New')+'</div>';
+    b.querySelector('.bt').textContent=nice(n);
+    b.onclick=()=>openPop(n);g.appendChild(b);
+  });
+  (async()=>{for(const n of list){
+    const d=await cover(n);
+    const el=g.querySelector('[data-n="'+CSS.escape(n)+'"] .cov');
+    if(el&&d&&!el.firstChild){const i=new Image();i.alt='';i.src=d;el.appendChild(i)}
+  }})();
+}
+function openPop(n){
+  const p=prog[n];
+  $('#pc').removeAttribute('src');cover(n).then(d=>{if(d)$('#pc').src=d});
+  $('#pn').textContent=nice(n);
+  $('#pm').textContent=['Added '+fmt(p.added),p.status==='reading'?Math.round(p.pct*100)+'% read · last read '+fmt(p.updated):'',p.status==='finished'?'Finished '+fmt(p.finished):''].filter(Boolean).join(' · ');
+  const box=$('#pbt');box.innerHTML='';
+  const mk=(t,cls,fn)=>{const b=document.createElement('button');b.className=cls;b.textContent=t;b.onclick=fn;box.appendChild(b)};
+  if(p.status==='new')mk('Start reading','go',()=>open(n,true));
+  if(p.status==='reading'){mk('Resume','go',()=>open(n));mk('Start over','sec',()=>open(n,true));mk('Mark as finished','lnk',()=>{finish(n);$('#pop').close();render();push(false)})}
+  if(p.status==='finished'){mk('Read again','go',()=>open(n,true));mk('Open where I left off','sec',()=>open(n))}
+  $('#pop').showModal();
+}
+function finish(n){const p=prog[n];p.status='finished';p.finished=today();p.pct=1;p.updated=Date.now();saveLocal()}
+
+/* ---------- reader: each page shown exactly as in the PDF ---------- */
+const wide=()=>prefs.two!==false&&(ZS[prefs.zoom]||1)===1&&$('#view').clientWidth/$('#view').clientHeight>1.35;
+const two=()=>wide()&&pg<pages-1;
+async function draw(){
+  if(!doc)return;
+  const tok=++rtok,v=$('#view'),z=ZS[prefs.zoom]||1,n=two()?2:1,at=pg;
+  try{
+    const ps=[];for(let k=0;k<n;k++)ps.push(await doc.getPage(at+1+k));
+    const vs=ps.map(p=>p.getViewport({scale:1}));
+    const tw=vs.reduce((a,b)=>a+b.width,0),mh=Math.max(...vs.map(b=>b.height));
+    const dpr=window.devicePixelRatio||1,sc=Math.min(v.clientWidth/tw,v.clientHeight/mh)*z*dpr;
+    rtasks.forEach(t=>{try{t.cancel()}catch(e){}});rtasks=[];
+    const offs=[];
+    for(const p of ps){
+      const vp=p.getViewport({scale:sc}),o=document.createElement('canvas');
+      o.width=Math.floor(vp.width);o.height=Math.floor(vp.height);
+      const t=p.render({canvasContext:o.getContext('2d'),viewport:vp});rtasks.push(t);await t.promise;offs.push(o);
+    }
+    if(tok!==rtok)return;
+    const cv=$('#cv'),W2=offs.reduce((a,o)=>a+o.width,0),H2=Math.max(...offs.map(o=>o.height));
+    cv.width=W2;cv.height=H2;cv.style.width=Math.floor(W2/dpr)+'px';cv.style.height=Math.floor(H2/dpr)+'px';
+    const cx=cv.getContext('2d');let x=0;offs.forEach(o=>{cx.drawImage(o,x,0);x+=o.width});
+    v.classList.toggle('z',z>1);v.scrollTop=0;v.scrollLeft=0;
+  }catch(e){}
+}
+function saveProg(){
+  if(!cur)return;
+  const p=prog[cur],sh=two()?2:1;
+  p.pg=pg+1;p.pct=Math.min(1,(pg+sh)/pages);p.updated=Date.now();
+  if(p.status!=='finished')p.status='reading';
+  if(pg+sh>=pages&&p.status!=='finished'){p.status='finished';p.finished=today();p.pct=1}
+  saveLocal();
+}
+function go(i,save){
+  const n=Math.max(0,Math.min(pages-1,i)),moved=n!==pg;pg=n;
+  const sh=two()?2:1;
+  $('#pb').style.width=((pg+sh)/pages*100)+'%';
+  $('#pt').textContent=(sh===2?'Pages '+(pg+1)+'–'+(pg+2):'Page '+(pg+1))+' of '+pages;
+  $('#prev').disabled=pg===0;$('#next').disabled=pg+sh>=pages;
+  if(moved||save==='draw')draw();
+  if(save!==false)saveProg();
+}
+function zoomLabel(){$('#zl').textContent=prefs.zoom?'· '+Math.round(ZS[prefs.zoom]*100)+'%':'· Fit';$('#tw').textContent=prefs.two===false?'Off':'On'}
+async function open(n,fresh){
+  cur=null;
+  if($('#pop').open)$('#pop').close();
+  if(fresh){Object.assign(prog[n],{status:'reading',pct:0,pg:1,finished:null,updated:Date.now()});saveLocal()}
+  $('#lib').classList.add('hide');$('#rd').classList.remove('hide');
+  $('#title').textContent=nice(n);
+  $('#load').classList.remove('hide');$('#lt').textContent='Opening book…';
+  applyTheme();zoomLabel();
+  try{
+    doc=await pdfjsLib.getDocument(url(n)).promise;
+    pages=doc.numPages;pg=Math.min(pages-1,Math.max(0,(fresh?1:prog[n].pg||1)-1));
+    $('#load').classList.add('hide');
+    go(pg,'draw');
+    cur=n;
+    location.hash='#read';
+  }catch(e){$('#lt').textContent='Could not open this book. Check that the file is in the book folder.'}
+}
+function close(){
+  if(cur)saveProg();
+  const was=cur;cur=null;rtok++;
+  if(doc){try{doc.destroy()}catch(e){}doc=null}
+  $('#rd').classList.add('hide');$('#lib').classList.remove('hide');$('#set').classList.add('hide');
+  if(location.hash)history.replaceState(null,'',location.pathname);
+  tab=was&&prog[was]&&prog[was].status==='finished'?'done':tab;
+  render();setSync();push(false);
+}
+function flushAll(){if(cur)saveProg();push(true)}
+
+function applyTheme(){$('#rd').classList.toggle('dark',prefs.theme==='dark');$('#tp').classList.toggle('on',prefs.theme!=='dark');$('#td').classList.toggle('on',prefs.theme==='dark')}
+const savePrefs=()=>LS.set('prefs',prefs);
+
+$('#prev').onclick=()=>go(pg-(wide()?2:1));
+$('#next').onclick=()=>go(pg+(wide()?2:1));
+$('#back').onclick=close;
+$('#aa').onclick=()=>$('#set').classList.toggle('hide');
+$('#sm').onclick=()=>{prefs.zoom=Math.max(0,prefs.zoom-1);savePrefs();zoomLabel();go(pg,'draw')};
+$('#lg').onclick=()=>{prefs.zoom=Math.min(ZS.length-1,prefs.zoom+1);savePrefs();zoomLabel();go(pg,'draw')};
+$('#tw').onclick=()=>{prefs.two=prefs.two===false;savePrefs();zoomLabel();go(pg,'draw')};
+$('#tp').onclick=()=>{prefs.theme='paper';savePrefs();applyTheme()};
+$('#td').onclick=()=>{prefs.theme='dark';savePrefs();applyTheme()};
+$('#fin').onclick=()=>{if(cur){finish(cur);$('#set').classList.add('hide');close()}};
+$('#t1').onclick=()=>{tab='reading';render()};
+$('#t2').onclick=()=>{tab='done';render()};
+$('#px').onclick=()=>$('#pop').close();
+$('#gear').onclick=()=>{$('#tok').value=LS.get('tok')||'';$('#sst').textContent=api()?'':'Sync only works on a github.io address.';$('#sd').showModal()};
+$('#sx').onclick=()=>$('#sd').close();
+$('#ssave').onclick=async()=>{
+  LS.set('tok',$('#tok').value.trim());$('#sst').textContent='Syncing…';
+  await pull();LS.set('dirty',1);await push(false);
+  $('#sst').textContent=LS.get('dirty')?'Could not save to the repository. Check the token and its permissions.':'Synced.';
+  setSync();render();
+};
+let rt;addEventListener('resize',()=>{if(!cur)return;clearTimeout(rt);rt=setTimeout(()=>go(pg,'draw'),150)});
+addEventListener('hashchange',()=>{if(!location.hash&&cur)close()});
+addEventListener('pagehide',flushAll);
+document.addEventListener('visibilitychange',()=>{if(document.hidden)flushAll()});
+if(navigator.storage&&navigator.storage.persist)navigator.storage.persist();
+lib();
+</script>
+</body>
+</html>
