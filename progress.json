@@ -1,1 +1,14 @@
-{"books":{}}
+{
+ "books": {
+  "Fundamentals of Data Engineering.pdf": {
+   "title": "Fundamentals of Data Engineering",
+   "added": "2026-10-17",
+   "status": "reading",
+   "para": 6,
+   "pct": 0.06950672645739911,
+   "pg": 31,
+   "updated": 1792515251547,
+   "finished": null
+  }
+ }
+}
