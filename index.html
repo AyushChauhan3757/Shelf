@@ -18,6 +18,8 @@ button:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
 .hd{display:flex;align-items:center;justify-content:space-between}
 .logo{font:600 26px Literata,Georgia,serif;color:var(--acc)}
 .gear{background:var(--card);border:0;border-radius:20px;padding:0 16px;min-height:44px;font-size:14px}
+#q{width:100%;max-width:420px;min-height:44px;border-radius:22px;border:0;background:var(--card);color:var(--ink);padding:0 18px;font:inherit;font-size:14px;display:block}
+#q::placeholder{color:var(--mute)}
 #sync{color:var(--mute);font-size:12px;margin-top:4px}
 .tabs{display:flex;gap:8px;margin:24px 0 18px}
 .tab{background:var(--card);border:0;border-radius:20px;padding:0 18px;min-height:44px;font-size:14px;color:var(--mute)}
@@ -75,7 +77,8 @@ dialog p{color:var(--mute);font-size:13px;line-height:1.5;margin:6px 0}
 <body>
 <main id="lib">
   <div class="hd"><div><div class="logo">Shelf</div><div id="sync"></div></div><button class="gear" id="gear">Settings</button></div>
-  <div class="tabs"><button class="tab on" id="t1">Reading</button><button class="tab" id="t2">Completed</button></div>
+  <input id="q" type="search" placeholder="Search books" autocomplete="off" style="margin-top:20px">
+  <div class="tabs" style="margin-top:14px"><button class="tab on" id="t1">Reading</button><button class="tab" id="t2">Completed</button></div>
   <div id="cont" class="hide"><div class="resume" id="resume"></div></div>
   <div class="grid" id="grid"></div>
   <p id="msg" class="hide"></p>
@@ -127,6 +130,8 @@ const prefs=Object.assign({zoom:0,theme:'paper'},LS.get('prefs')||{});
 let books=[],cur=null,pages=1,pg=0,tab='reading',doc=null,rtask=null,rtok=0,rtasks=[];const ZS=[1,1.25,1.5,2,3];
 let prog=LS.get('prog')||{},rsha=null;
 
+const CM='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/cmaps/';
+const opts=n=>({url:url(n),cMapUrl:CM,cMapPacked:true});
 const nice=n=>n.replace(/\.pdf$/i,'').replace(/[_-]+/g,' ').trim();
 const url=n=>'book/'+encodeURIComponent(n);
 const fmt=d=>d?new Date(d).toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'}):'';
@@ -184,7 +189,7 @@ async function listBooks(){
 async function cover(n){
   const k='cov:'+n,c=LS.get(k);if(c)return c;
   try{
-    const pdf=await pdfjsLib.getDocument(url(n)).promise;
+    const pdf=await pdfjsLib.getDocument(opts(n)).promise;
     const p=await pdf.getPage(1),v0=p.getViewport({scale:1}),v=p.getViewport({scale:300/v0.width});
     const cv=document.createElement('canvas');cv.width=v.width;cv.height=v.height;
     await p.render({canvasContext:cv.getContext('2d'),viewport:v}).promise;
@@ -208,12 +213,14 @@ async function lib(){
 function render(){
   const g=$('#grid');g.innerHTML='';
   const done=tab==='done';
-  const list=books.filter(n=>(prog[n]&&prog[n].status==='finished')===done)
-    .sort((a,b)=>(done?(prog[b].finished||'').localeCompare(prog[a].finished||''):(prog[b].updated||0)-(prog[a].updated||0)));
+  const q=$('#q').value.trim().toLowerCase();
+  const list=q?books.filter(n=>nice(n).toLowerCase().includes(q)).sort((a,b)=>nice(a).localeCompare(nice(b)))
+    :books.filter(n=>(prog[n]&&prog[n].status==='finished')===done)
+      .sort((a,b)=>(done?(prog[b].finished||'').localeCompare(prog[a].finished||''):(prog[b].updated||0)-(prog[a].updated||0)));
   $('#t1').textContent='Reading ('+books.filter(n=>prog[n]&&prog[n].status!=='finished').length+')';
   $('#t2').textContent='Completed ('+books.filter(n=>prog[n]&&prog[n].status==='finished').length+')';
   $('#t1').classList.toggle('on',!done);$('#t2').classList.toggle('on',done);
-  const last=!done&&list.find(n=>prog[n].status==='reading');
+  const last=!done&&!q&&list.find(n=>prog[n].status==='reading');
   $('#cont').classList.toggle('hide',!last);
   if(last){
     const r=$('#resume');r.innerHTML='<img alt=""><div class="t"><div class="n"></div><div class="m"></div></div><button class="go">Resume</button>';
@@ -222,7 +229,7 @@ function render(){
     r.querySelector('.go').onclick=()=>open(last);
     cover(last).then(d=>{if(d)r.querySelector('img').src=d});
   }
-  if(!list.length){const e=document.createElement('p');e.style.color='var(--mute)';e.textContent=done?'No completed books yet.':'Nothing here. Everything is completed.';g.appendChild(e)}
+  if(!list.length){const e=document.createElement('p');e.style.color='var(--mute)';e.textContent=q?'No books match your search.':(done?'No completed books yet.':'Nothing here. Everything is completed.');g.appendChild(e)}
   list.forEach(n=>{
     const p=prog[n],pc=Math.round((p.pct||0)*100);
     const b=document.createElement('button');b.className='book';b.dataset.n=n;
@@ -272,7 +279,7 @@ async function draw(){
     const cv=$('#cv'),W2=offs.reduce((a,o)=>a+o.width,0),H2=Math.max(...offs.map(o=>o.height));
     cv.width=W2;cv.height=H2;cv.style.width=Math.floor(W2/dpr)+'px';cv.style.height=Math.floor(H2/dpr)+'px';
     const cx=cv.getContext('2d');let x=0;offs.forEach(o=>{cx.drawImage(o,x,0);x+=o.width});
-    v.classList.toggle('z',z>1);v.scrollTop=0;v.scrollLeft=0;
+    v.classList.toggle('z',z>1);v.scrollTop=0;v.scrollLeft=0;cv.style.visibility='visible';
   }catch(e){}
 }
 function saveProg(){
@@ -299,16 +306,16 @@ async function open(n,fresh){
   if(fresh){Object.assign(prog[n],{status:'reading',pct:0,pg:1,finished:null,updated:Date.now()});saveLocal()}
   $('#lib').classList.add('hide');$('#rd').classList.remove('hide');
   $('#title').textContent=nice(n);
-  $('#load').classList.remove('hide');$('#lt').textContent='Opening book…';
+  $('#load').classList.remove('hide');$('#lt').textContent='Opening book…';$('#cv').style.visibility='hidden';
   applyTheme();zoomLabel();
   try{
-    doc=await pdfjsLib.getDocument(url(n)).promise;
+    doc=await pdfjsLib.getDocument(opts(n)).promise;
     pages=doc.numPages;pg=Math.min(pages-1,Math.max(0,(fresh?1:prog[n].pg||1)-1));
     $('#load').classList.add('hide');
     go(pg,'draw');
     cur=n;
     location.hash='#read';
-  }catch(e){$('#lt').textContent='Could not open this book. Check that the file is in the book folder.'}
+  }catch(e){const nm=e&&e.name;$('#lt').textContent=nm==='MissingPDFException'?'This file was not found on your site yet (404). Check that GitHub Pages has finished deploying after your upload.':nm==='PasswordException'?'This PDF is password protected.':'Could not open this book ('+((e&&(e.message||e.name))||'unknown error')+').'}
 }
 function close(){
   if(cur)saveProg();
@@ -334,6 +341,7 @@ $('#tw').onclick=()=>{prefs.two=prefs.two===false;savePrefs();zoomLabel();go(pg,
 $('#tp').onclick=()=>{prefs.theme='paper';savePrefs();applyTheme()};
 $('#td').onclick=()=>{prefs.theme='dark';savePrefs();applyTheme()};
 $('#fin').onclick=()=>{if(cur){finish(cur);$('#set').classList.add('hide');close()}};
+$('#q').oninput=render;
 $('#t1').onclick=()=>{tab='reading';render()};
 $('#t2').onclick=()=>{tab='done';render()};
 $('#px').onclick=()=>$('#pop').close();
